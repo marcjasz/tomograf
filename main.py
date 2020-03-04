@@ -9,5 +9,5 @@ if __name__ == '__main__':
     scan = Scanner(img).to_square_img()
 
     plt.imshow(scan.image)
+    plt.plot(*zip(*scan.bresenham(200, 200, 700, 900)), 'r')
     plt.show()
-
