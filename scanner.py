@@ -1,9 +1,11 @@
 from skimage import util
+import numpy as np
 import math
 
 class Scanner:
     def __init__(self, image):
-        self.image = image
+        self.image = np.array(image)
+        self.width = image.shape[0]
 
     def to_square_img(self):
         diff = self.image.shape[0] - self.image.shape[1]
@@ -15,7 +17,7 @@ class Scanner:
         self.image = util.pad(self.image, padding, 'constant')
         return self
 
-    def bresenham(self, x1, y1, x2, y2):
+    def line_bresenham(self, x1, y1, x2, y2):
         y_diff = y2 - y1
         x_diff = x2 - x1
         result = []
@@ -57,4 +59,25 @@ class Scanner:
                         x += inc
                         thresh += thresh_step
         return result
+
+    def circle_bresenham(self, xc, yc, r):
+        x = 0
+        y = r
+        d = 3 - 2*r
+        result = self.new_points(xc, yc, x, y)
+        while y >= x:
+            x += 1
+            if d > 0:
+                y -= 1
+                d = d + 4*(x - y) + 10
+            else:
+                d = d + 4*x + 6
+            result += self.new_points(xc, yc, x, y)
+        return result
+
+    def new_points(self, xc, yc, x, y):
+        return [(xc+x, yc+y), (xc-x, yc+y),
+                (xc+x, yc-y), (xc-x, yc-y),
+                (xc+y, yc+x), (xc-y, yc+x),
+                (xc+y, yc-x), (xc-y, yc-x)]
 
