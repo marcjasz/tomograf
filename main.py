@@ -10,12 +10,20 @@ if __name__ == '__main__':
     scan = Scanner(img).to_square_img()
     scan.radius = scan.width//2 - 1
 
-    circle = scan.circle_bresenham(scan.width//2, scan.width//2, scan.radius)
-    indexes = np.array(circle).transpose()
+    rotation = math.pi*1.8
+    detectors = scan.get_detectors(math.pi/5, rotation, 25)
+    emitter = scan.get_emitter(rotation)
+
+    for detector in detectors:
+        line = scan.line_bresenham(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
+        line_indexes = [scan.to_plot_coords(coords) for coords in line]
+        line_indexes = np.array(line_indexes).transpose()
+        scan.image[line_indexes[0], line_indexes[1]] = 1
+
+    circle = scan.circle_bresenham(0, 0, scan.radius)
+    indexes = [scan.to_plot_coords(coords) for coords in circle]
+    indexes = np.array(indexes).transpose()
     scan.image[indexes[0], indexes[1]] = 1
-    line = scan.line_bresenham(0, 0, scan.width-1, scan.width-1)
-    line_indexes = np.array(line).transpose()
-    scan.image[line_indexes[0], line_indexes[1]] = 1
 
     plt.imshow(scan.image)
     plt.show()

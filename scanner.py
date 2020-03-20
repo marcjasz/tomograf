@@ -7,6 +7,22 @@ class Scanner:
         self.image = np.array(image)
         self.width = image.shape[0]
 
+        # center and radius of the inscribed circle
+        self.xc = self.width / 2
+        self.yc = self.width / 2
+        self.r = self.width / 2
+
+    # relative to the center, so angle is twice as big as at the edge
+    def get_detectors(self, angle, rotation, sample_size):
+        angle /= 2
+        rotation += math.pi
+        angles = np.linspace(-angle + rotation, angle + rotation, sample_size)
+        return [(self.r*math.sin(x), self.r*math.cos(x)) for x in angles]
+
+    # relative to the center
+    def get_emitter(self, rotation):
+        return (self.r*math.sin(rotation), self.r*math.cos(rotation))
+
     def to_square_img(self):
         diff = self.image.shape[0] - self.image.shape[1]
         padding = (0,)
@@ -81,3 +97,5 @@ class Scanner:
                 (xc+y, yc+x), (xc-y, yc+x),
                 (xc+y, yc-x), (xc-y, yc-x)]
 
+    def to_plot_coords(self, coords):
+        return (int(-coords[1]+self.r-1), int(coords[0]+self.r-1))
