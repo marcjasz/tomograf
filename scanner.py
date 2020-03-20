@@ -5,9 +5,11 @@ import math
 class Scanner:
     def __init__(self, image):
         self.image = np.array(image)
-        self.width = image.shape[0]
+        self.set_dimensions()
 
-        # center and radius of the inscribed circle
+    # center and radius of the inscribed circle
+    def set_dimensions(self):
+        self.width = self.image.shape[0]
         self.xc = self.width / 2
         self.yc = self.width / 2
         self.r = self.width / 2
@@ -31,6 +33,7 @@ class Scanner:
         elif diff < 0:
             padding = ((-math.ceil(diff/2), - diff + math.ceil(diff/2)), (0, 0))
         self.image = util.pad(self.image, padding, 'constant')
+        self.set_dimensions()
         return self
 
     def line_bresenham(self, x1, y1, x2, y2):
