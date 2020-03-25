@@ -79,6 +79,7 @@ class Scanner:
                         thresh += thresh_step
         return result
 
+
     def circle_bresenham(self, xc, yc, r):
         x = 0
         y = r
@@ -94,11 +95,43 @@ class Scanner:
             result += self.new_points(xc, yc, x, y)
         return result
 
+    
     def new_points(self, xc, yc, x, y):
         return [(xc+x, yc+y), (xc-x, yc+y),
                 (xc+x, yc-y), (xc-x, yc-y),
                 (xc+y, yc+x), (xc-y, yc+x),
                 (xc+y, yc-x), (xc-y, yc-x)]
 
+
     def to_plot_coords(self, coords):
         return (int(-coords[1]+self.r-1), int(coords[0]+self.r-1))
+
+
+    def generate_sinogram(self, angle_spread, detectors_amount, step):
+        res = []
+        amount = 2 / step
+
+        # dla każdego położenia tomografu
+        for i, x in enumerate(np.linspace(0, 2 - step, amount - 1)):
+            res.append([])
+            rotation = math.pi * x
+            detectors = self.get_detectors(angle_spread, rotation, detectors_amount)
+            emitter = self.get_emitter(rotation)
+            
+            # dla każdego detektora w obecnym położeniu tomografu
+            for detector in detectors:
+                
+                # zbierz koordynaty punktów należących do linii między emiterem a detektorem
+                line = self.line_bresenham(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
+                line_coords = [self.to_plot_coords(coords) for coords in line]
+                line_coords = np.array(line_coords)
+                
+                # weź ich wartości i dodaj do listy ich średnią
+                values = [self.image[coordsx[0], coordsx[1]] for coordsx in line_coords]
+                res[i].append(np.mean(values))
+
+        return np.array(res).transpose()
+
+    
+
+
