@@ -10,7 +10,7 @@ if __name__ == '__main__':
     img = io.imread('img/Head.jpg')
     img = color.rgb2gray(img)
     scan = Scanner(img, Bresenham).to_square_img()
-    scan.set_sampling_params(step=0.01, detectors_number=100, angle=math.pi)
+    scan.set_sampling_params(step=0.1, detectors_number=20, angle=math.pi)
 
     output = scan.inverse_radon_transform(scan.generate_sinogram())
 

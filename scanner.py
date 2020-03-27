@@ -1,6 +1,7 @@
 from skimage import util
 import numpy as np
 import math
+import functools
 
 def normalize(num, bot, top):
     if num > top:
@@ -36,6 +37,24 @@ class Scanner:
         self.angle = angle
         self.emitters_number = int(2 / step) - 1
         self.detectors_number = detectors_number
+
+    @property
+    @functools.lru_cache()
+    def positions(self):
+        positions = []
+        for rotation in np.linspace(0, math.pi*(2-self.step), self.emitters_number):
+            positions.append({ 'rotation': rotation,
+                               'emitter': self.get_emitter(rotation),
+                               'detectors': self.get_detectors(rotation) })
+        return positions
+
+    @property
+    @functools.lru_cache()
+    def lines(self):
+        lines = []
+        for position in self.positions:
+            lines.extend([self.geometry.get_line(*position['emitter'], *detector) for detector in position['detectors']])
+        return lines
 
     # relative to the center, so angle is twice as big as at the edge
     def get_detectors(self, rotation):

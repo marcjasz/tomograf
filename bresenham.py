@@ -1,6 +1,7 @@
 class Bresenham:
     @staticmethod
     def get_line(x1, y1, x2, y2):
+        x1, x2, y1, y2 = int(x1), int(x2), int(y1), int(y2)
         y_diff = y2 - y1
         x_diff = x2 - x1
         result = []
