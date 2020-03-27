@@ -130,8 +130,40 @@ class Scanner:
                 values = [self.image[coordsx[0], coordsx[1]] for coordsx in line_coords]
                 res[i].append(np.mean(values))
 
-        return np.array(res).transpose()
+        return np.array(res)
 
     
+    def inverse_radon_transform(self, sinogram, angle_spread, detectors_amount, step):
+        
+        # przygotuj sobie tablicę samych zer
+        res = [[0 for _ in i] for i in self.image]
+        
+        # wszystko tak samo, tylko dodaj ładnie na każdej linii średnią zamiast zapisywać ją do tablicy 
+        amount = 2 / step
 
+        # dla każdego położenia tomografu
+        for i, x in enumerate(np.linspace(0, 2 - step, amount - 1)):
+            rotation = math.pi * x
+            detectors = self.get_detectors(angle_spread, rotation, detectors_amount)
+            emitter = self.get_emitter(rotation)
+            
+            # dla każdego detektora w obecnym położeniu tomografu
+            for j, detector in enumerate(detectors):
+                
+                # zbierz koordynaty punktów należących do linii między emiterem a detektorem
+                line = self.line_bresenham(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
+                line_coords = [self.to_plot_coords(coords) for coords in line]
+                line_coords = np.array(line_coords)
+                
+                for coordsx in line_coords:
+                    try:
+                        res[coordsx[0]][coordsx[1]] += sinogram[i, j]
+                    except IndexError:
+                        print(coordsx[0])
+                        print(coordsx[1])
+                        print(i, j)
+                        print("Sinogram: ", np.shape(sinogram))
+                        print("Res: ", np.shape(res))
 
+                        exit(-1)
+        return res

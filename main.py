@@ -15,13 +15,14 @@ def normalize(num, bot, top):
 
 
 def normalize_photo(photo):
-    bot, top = np.percentile(photo, [0.20, 0.50])
+    bot, top = np.percentile(photo, (2, 90))
+    print(bot, top)
     res = [[normalize(num, bot, top) for num in x] for x in photo]
     return res
 
 
 if __name__ == '__main__':
-    img = io.imread('img/Shepp_logan.jpg')
+    img = io.imread('img/Head.jpg')
     img = color.rgb2gray(img)
     scan = Scanner(img).to_square_img()
     print(img.shape)
@@ -44,5 +45,11 @@ if __name__ == '__main__':
     # indexes = np.array(indexes).transpose()
     # scan.image[indexes[0], indexes[1]] = 1
 
-    plt.imshow(scan.generate_sinogram(math.pi, 200, 0.01))
+    detectors = 300
+    step = 0.008
+    angle_spread = math.pi
+
+    output = scan.inverse_radon_transform(scan.generate_sinogram(angle_spread, detectors, step), math.pi, detectors, step)
+
+    plt.imshow(normalize_photo(output))
     plt.show()
