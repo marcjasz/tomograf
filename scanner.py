@@ -2,7 +2,6 @@ from skimage import util
 import numpy as np
 import math
 
-
 def normalize(num, bot, top):
     if num > top:
         return 1
@@ -20,8 +19,9 @@ def normalize_photo(photo):
 
 
 class Scanner:
-    def __init__(self, image):
+    def __init__(self, image, geometry_strategy):
         self.image = np.array(image)
+        self.geometry = geometry_strategy
         self.set_dimensions()
 
     # center and radius of the inscribed circle
@@ -53,83 +53,15 @@ class Scanner:
         self.set_dimensions()
         return self
 
-    def line_bresenham(self, x1, y1, x2, y2):
-        y_diff = y2 - y1
-        x_diff = x2 - x1
-        result = []
-        if x_diff == 0:
-            if y2 < y1:
-                y1, y2 = y2, y1
-            for y in range(y1, y2+1):
-                result.append((x1, y))
-        else:
-            m = float(y_diff) / x_diff
-            inc = 1 if m >= 0 else -1
-            current = 0
-            if m <= 1 and m >= -1:
-                step = abs(y_diff) * 2
-                thresh = abs(x_diff)
-                thresh_step = abs(x_diff) * 2
-                y = y1
-                if x2 < x1:
-                    x1, x2 = x2, x1
-                    y = y2
-                for x in range(x1, x2+1):
-                    result.append((x, y))
-                    current += step
-                    if current >= thresh:
-                        y += inc
-                        thresh += thresh_step
-            else:
-                step = abs(x_diff) * 2
-                thresh = abs(y_diff)
-                thresh_step = abs(y_diff) * 2
-                x = x1
-                if y2 < y1:
-                    y1, y2 = y2, y1
-                    x = x2
-                for y in range(y1, y2+1):
-                    result.append((x, y))
-                    current += step
-                    if current >= thresh:
-                        x += inc
-                        thresh += thresh_step
-        return result
-
-
-    def circle_bresenham(self, xc, yc, r):
-        x = 0
-        y = r
-        d = 3 - 2*r
-        result = self.new_points(xc, yc, x, y)
-        while y >= x:
-            x += 1
-            if d > 0:
-                y -= 1
-                d = d + 4*(x - y) + 10
-            else:
-                d = d + 4*x + 6
-            result += self.new_points(xc, yc, x, y)
-        return result
-
-    
-    def new_points(self, xc, yc, x, y):
-        return [(xc+x, yc+y), (xc-x, yc+y),
-                (xc+x, yc-y), (xc-x, yc-y),
-                (xc+y, yc+x), (xc-y, yc+x),
-                (xc+y, yc-x), (xc-y, yc-x)]
-
-
     def to_plot_coords(self, coords):
         return (int(-coords[1]+self.r-1), int(coords[0]+self.r-1))
-
 
     def generate_sinogram(self, angle_spread, detectors_amount, step):
         res = []
         amount = 2 / step
 
         # dla każdego położenia tomografu
-        for i, x in enumerate(np.linspace(0, 2 - step, amount - 1)):
+        for i, x in enumerate(np.linspace(0, 2 - step, int(amount - 1))):
             res.append([])
             rotation = math.pi * x
             detectors = self.get_detectors(angle_spread, rotation, detectors_amount)
@@ -139,7 +71,7 @@ class Scanner:
             for detector in detectors:
                 
                 # zbierz koordynaty punktów należących do linii między emiterem a detektorem
-                line = self.line_bresenham(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
+                line = self.geometry.get_line(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
                 line_coords = [self.to_plot_coords(coords) for coords in line]
                 line_coords = np.array(line_coords)
                 
@@ -159,7 +91,7 @@ class Scanner:
         amount = 2 / step
 
         # dla każdego położenia tomografu
-        for i, x in enumerate(np.linspace(0, 2 - step, amount - 1)):
+        for i, x in enumerate(np.linspace(0, 2 - step, int(amount - 1))):
             rotation = math.pi * x
             detectors = self.get_detectors(angle_spread, rotation, detectors_amount)
             emitter = self.get_emitter(rotation)
@@ -168,7 +100,7 @@ class Scanner:
             for j, detector in enumerate(detectors):
                 
                 # zbierz koordynaty punktów należących do linii między emiterem a detektorem
-                line = self.line_bresenham(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
+                line = self.geometry.get_line(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
                 line_coords = [self.to_plot_coords(coords) for coords in line]
                 line_coords = np.array(line_coords)
                 
