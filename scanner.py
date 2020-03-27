@@ -31,11 +31,17 @@ class Scanner:
         self.yc = self.width / 2
         self.r = self.width / 2
 
+    def set_sampling_params(self, step=None, angle=None, detectors_number=None):
+        self.step = step
+        self.angle = angle
+        self.emitters_number = int(2 / step) - 1
+        self.detectors_number = detectors_number
+
     # relative to the center, so angle is twice as big as at the edge
-    def get_detectors(self, angle, rotation, sample_size):
-        angle /= 2
+    def get_detectors(self, rotation):
+        angle = self.angle / 2
         rotation += math.pi
-        angles = np.linspace(-angle + rotation, angle + rotation, sample_size)
+        angles = np.linspace(-angle + rotation, angle + rotation, self.detectors_number)
         return [(self.r*math.sin(x), self.r*math.cos(x)) for x in angles]
 
     # relative to the center
@@ -56,15 +62,14 @@ class Scanner:
     def to_plot_coords(self, coords):
         return (int(-coords[1]+self.r-1), int(coords[0]+self.r-1))
 
-    def generate_sinogram(self, angle_spread, detectors_amount, step):
+    def generate_sinogram(self):
         res = []
-        amount = 2 / step
 
         # dla każdego położenia tomografu
-        for i, x in enumerate(np.linspace(0, 2 - step, int(amount - 1))):
+        for i, x in enumerate(np.linspace(0, 2 - self.step, self.emitters_number)):
             res.append([])
             rotation = math.pi * x
-            detectors = self.get_detectors(angle_spread, rotation, detectors_amount)
+            detectors = self.get_detectors(rotation)
             emitter = self.get_emitter(rotation)
             
             # dla każdego detektora w obecnym położeniu tomografu
@@ -82,18 +87,17 @@ class Scanner:
         return np.array(res)
 
     
-    def inverse_radon_transform(self, sinogram, angle_spread, detectors_amount, step):
+    def inverse_radon_transform(self, sinogram):
         
         # przygotuj sobie tablicę samych zer
         res = [[0 for _ in i] for i in self.image]
         
         # wszystko tak samo, tylko dodaj ładnie na każdej linii średnią zamiast zapisywać ją do tablicy 
-        amount = 2 / step
 
         # dla każdego położenia tomografu
-        for i, x in enumerate(np.linspace(0, 2 - step, int(amount - 1))):
+        for i, x in enumerate(np.linspace(0, 2 - self.step, self.emitters_number)):
             rotation = math.pi * x
-            detectors = self.get_detectors(angle_spread, rotation, detectors_amount)
+            detectors = self.get_detectors(rotation)
             emitter = self.get_emitter(rotation)
             
             # dla każdego detektora w obecnym położeniu tomografu

@@ -10,12 +10,9 @@ if __name__ == '__main__':
     img = io.imread('img/Head.jpg')
     img = color.rgb2gray(img)
     scan = Scanner(img, Bresenham).to_square_img()
+    scan.set_sampling_params(step=0.01, detectors_number=100, angle=math.pi)
 
-    detectors = 100
-    step = 0.01
-    angle_spread = math.pi/4
-
-    output = scan.inverse_radon_transform(scan.generate_sinogram(angle_spread, detectors, step), math.pi, detectors, step)
+    output = scan.inverse_radon_transform(scan.generate_sinogram())
 
     plt.imshow(normalize_photo(output))
     plt.show()
