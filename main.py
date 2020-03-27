@@ -1,24 +1,8 @@
 from skimage import io, color, util
 from matplotlib import pyplot as plt
-from scanner import Scanner
+from scanner import Scanner, normalize_photo
 import numpy as np
 import math
-
-
-def normalize(num, bot, top):
-    if num > top:
-        return 1
-    if num < bot:
-        return 0
-    
-    return (num - bot)/(top - bot)
-
-
-def normalize_photo(photo):
-    bot, top = np.percentile(photo, (2, 90))
-    print(bot, top)
-    res = [[normalize(num, bot, top) for num in x] for x in photo]
-    return res
 
 
 if __name__ == '__main__':
@@ -27,7 +11,6 @@ if __name__ == '__main__':
     scan = Scanner(img).to_square_img()
     print(img.shape)
     print(scan.width)
-    scan.radius = scan.width // 2 - 1
 
     # for x in np.linspace(0, 2, 10):
     #     rotation = math.pi * x

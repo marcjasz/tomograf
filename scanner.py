@@ -2,6 +2,23 @@ from skimage import util
 import numpy as np
 import math
 
+
+def normalize(num, bot, top):
+    if num > top:
+        return 1
+    if num < bot:
+        return 0
+    
+    return (num - bot)/(top - bot)
+
+
+def normalize_photo(photo):
+    bot, top = np.percentile(photo, (2, 90))
+    print(bot, top)
+    res = [[normalize(num, bot, top) for num in x] for x in photo]
+    return res
+
+
 class Scanner:
     def __init__(self, image):
         self.image = np.array(image)
