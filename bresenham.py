@@ -44,7 +44,6 @@ class Bresenham:
                         thresh += thresh_step
         return result
 
-
     @classmethod
     def get_circle(cls, xc, yc, r):
         x = 0

@@ -48,8 +48,15 @@ class Scanner:
                                'detectors': self.get_detectors(rotation) })
         return positions
 
-    @property
-    @functools.lru_cache()
+    def get_detectors(self, rotation):
+        detectors = []
+        for detector_coords in self.get_detector_coords(rotation):
+            line = self.geometry.get_line(*self.get_emitter(rotation), *detector_coords)
+            detectors.append({ 'coords': detector_coords,
+                               'line': np.array([self.to_plot_coords(coords) for coords in line]),
+                               'value': None })
+        return detectors
+
     def lines(self):
         lines = []
         for position in self.positions:
@@ -57,7 +64,7 @@ class Scanner:
         return lines
 
     # relative to the center, so angle is twice as big as at the edge
-    def get_detectors(self, rotation):
+    def get_detector_coords(self, rotation):
         angle = self.angle / 2
         rotation += math.pi
         angles = np.linspace(-angle + rotation, angle + rotation, self.detectors_number)
@@ -81,27 +88,24 @@ class Scanner:
     def to_plot_coords(self, coords):
         return (int(-coords[1]+self.r-1), int(coords[0]+self.r-1))
 
+    @functools.lru_cache()
     def generate_sinogram(self):
         res = []
 
         # dla każdego położenia tomografu
-        for i, x in enumerate(np.linspace(0, 2 - self.step, self.emitters_number)):
-            res.append([])
-            rotation = math.pi * x
-            detectors = self.get_detectors(rotation)
-            emitter = self.get_emitter(rotation)
-            
+        for position in self.positions:
+            row = []
+
             # dla każdego detektora w obecnym położeniu tomografu
-            for detector in detectors:
-                
+            for detector in position['detectors']:
+
                 # zbierz koordynaty punktów należących do linii między emiterem a detektorem
-                line = self.geometry.get_line(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
-                line_coords = [self.to_plot_coords(coords) for coords in line]
-                line_coords = np.array(line_coords)
-                
                 # weź ich wartości i dodaj do listy ich średnią
-                values = [self.image[coordsx[0], coordsx[1]] for coordsx in line_coords]
-                res[i].append(np.mean(values))
+                values = [self.image[coordsx[0], coordsx[1]] for coordsx in detector['line']]
+                detector['value'] = np.mean(values)
+                row.append(detector['value'])
+
+            res.append(row)
 
         return np.array(res)
 
@@ -114,27 +118,20 @@ class Scanner:
         # wszystko tak samo, tylko dodaj ładnie na każdej linii średnią zamiast zapisywać ją do tablicy 
 
         # dla każdego położenia tomografu
-        for i, x in enumerate(np.linspace(0, 2 - self.step, self.emitters_number)):
-            rotation = math.pi * x
-            detectors = self.get_detectors(rotation)
-            emitter = self.get_emitter(rotation)
-            
+        for position in self.positions:
+
             # dla każdego detektora w obecnym położeniu tomografu
-            for j, detector in enumerate(detectors):
-                
+            for detector in position['detectors']:
+
                 # zbierz koordynaty punktów należących do linii między emiterem a detektorem
-                line = self.geometry.get_line(int(emitter[0]), int(emitter[1]), int(detector[0]), int(detector[1]))
-                line_coords = [self.to_plot_coords(coords) for coords in line]
-                line_coords = np.array(line_coords)
-                
-                for coordsx in line_coords:
+                for coordsx in detector['line']:
                     try:
-                        res[coordsx[0]][coordsx[1]] += sinogram[i, j]
+                        res[coordsx[0]][coordsx[1]] += detector['value']
                     except IndexError:
                         print(coordsx[0])
                         print(coordsx[1])
-                        print(i, j)
-                        print("Sinogram: ", np.shape(sinogram))
+                        print(detector['coords'])
+                        print("Sinogram: ", (len(self.positions), len(position['detectors'])))
                         print("Res: ", np.shape(res))
 
                         exit(-1)
