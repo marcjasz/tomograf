@@ -82,7 +82,6 @@ class Scanner:
         return (int(-coords[1]+self.r-1), int(coords[0]+self.r-1))
 
     def generate_sinogram(self):
-        print("Radon")
         res = []
 
         # dla każdego położenia tomografu
@@ -100,7 +99,7 @@ class Scanner:
                 line_coords = [self.to_plot_coords(coords) for coords in line]
                 line_coords = np.array(line_coords)
                 
-                # weź ich wartości i dodaj do listy ich średnią
+                # weź ich wartości i dodaj do listy ich średnią - odczyt z detektora
                 values = [self.image[coordsx[0], coordsx[1]] for coordsx in line_coords]
                 res[i].append(np.mean(values))
 
@@ -108,8 +107,6 @@ class Scanner:
 
     
     def inverse_radon_transform(self, sinogram):
-        print("Odwracamy radona")
-
         # przygotuj sobie tablicę samych zer
         res = [[0 for _ in i] for i in self.image]
         
@@ -130,16 +127,5 @@ class Scanner:
                 line_coords = np.array(line_coords)
                 
                 for coordsx in line_coords:
-                    try:
-                        res[coordsx[0]][coordsx[1]] += sinogram[i][j]
-                    except IndexError:
-                        print(coordsx[0])
-                        print(coordsx[1])
-                        print(i, j)
-                        print("Sinogram: ", np.shape(sinogram))
-                        print("Res: ", np.shape(res))
-                        exit(-1)
-                    except TypeError:
-                        print(type(coordsx), coordsx)
-                        exit(-1)
+                    res[coordsx[0]][coordsx[1]] += sinogram[i][j]
         return res
