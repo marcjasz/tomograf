@@ -119,6 +119,13 @@ class Scanner:
             res.append(row)
         return np.array(res)
 
+    def filter_samples(self, kernel):
+        for position in self.positions:
+            values = [sample['value'] for sample in position['samples']]
+            values = np.convolve(values, kernel)
+            for i, sample in enumerate(position['samples']):
+                sample['value'] = values[i]
+
     def inverse_radon_transform(self):
         # przygotuj sobie tablicę samych zer
         res = [[0 for _ in i] for i in self.image]
