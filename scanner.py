@@ -111,7 +111,6 @@ class Scanner:
 
     
     def inverse_radon_transform(self, sinogram):
-        
         # przygotuj sobie tablicę samych zer
         res = [[0 for _ in i] for i in self.image]
         
@@ -119,20 +118,9 @@ class Scanner:
 
         # dla każdego położenia tomografu
         for position in self.positions:
-
             # dla każdego detektora w obecnym położeniu tomografu
             for detector in position['detectors']:
-
                 # zbierz koordynaty punktów należących do linii między emiterem a detektorem
                 for coordsx in detector['line']:
-                    try:
-                        res[coordsx[0]][coordsx[1]] += detector['value']
-                    except IndexError:
-                        print(coordsx[0])
-                        print(coordsx[1])
-                        print(detector['coords'])
-                        print("Sinogram: ", (len(self.positions), len(position['detectors'])))
-                        print("Res: ", np.shape(res))
-
-                        exit(-1)
+                    res[coordsx[0]][coordsx[1]] += detector['value']
         return res
