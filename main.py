@@ -2,6 +2,7 @@ from skimage import io, color, util
 from matplotlib import pyplot as plt
 from scanner import Scanner, normalize_photo
 from bresenham import Bresenham
+from sklearn.metrics import mean_squared_error
 import numpy as np
 import math
 import time
@@ -18,6 +19,7 @@ if __name__ == '__main__':
     output = scan.inverse_radon_transform(scan.generate_sinogram())
 
     plt.imshow(normalize_photo(output))
+    plt.title('MSE: ' + mean_squared_error(output, scan.image))
     plt.show()
 
     print(time.time() - start)
