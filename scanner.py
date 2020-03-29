@@ -13,7 +13,7 @@ def normalize(num, bot, top):
 
 
 def normalize_photo(photo):
-    bot, top = np.percentile(photo, (2, 90))
+    bot, top = np.percentile(photo, (40, 98))
     print(bot, top)
     res = [[normalize(num, bot, top) for num in x] for x in photo]
     return res
@@ -28,9 +28,9 @@ class Scanner:
     # center and radius of the inscribed circle
     def set_dimensions(self):
         self.width = self.image.shape[0]
-        self.xc = self.width / 2
-        self.yc = self.width / 2
-        self.r = self.width / 2
+        self.xc = self.width/2 - 1
+        self.yc = self.width/2 - 1
+        self.r = self.width/2 - 2
 
     def set_sampling_params(self, step=None, angle=None, detectors_number=None):
         self.step = step
@@ -44,18 +44,32 @@ class Scanner:
         positions = []
         for rotation in np.linspace(0, math.pi*(2-self.step), self.emitters_number):
             positions.append({ 'rotation': rotation,
-                               'emitter': self.get_emitter(rotation),
-                               'detectors': self.get_detectors(rotation) })
+                               'samples': self.get_parallel_samples(rotation) })
         return positions
 
-    def get_detectors(self, rotation):
-        detectors = []
+    def get_parallel_samples(self, rotation):
+        samples = []
+        detector_coords = self.get_detector_coords(rotation)[::-1]
+        emitter_coords = self.get_detector_coords(rotation+math.pi)
+        for i in range(len(detector_coords)):
+            line = self.geometry.get_line(*detector_coords[i], *emitter_coords[i])
+            samples.append({ 'emitter': emitter_coords[0],
+                             'detector': detector_coords[1],
+                             'line': np.array([self.to_plot_coords(coords) for coords in line]),
+                             'value': None })
+        return samples
+
+
+    def get_fan_samples(self, rotation):
+        samples = []
+        emitter_coords = self.get_emitter(rotation)
         for detector_coords in self.get_detector_coords(rotation):
-            line = self.geometry.get_line(*self.get_emitter(rotation), *detector_coords)
-            detectors.append({ 'coords': detector_coords,
-                               'line': np.array([self.to_plot_coords(coords) for coords in line]),
-                               'value': None })
-        return detectors
+            line = self.geometry.get_line(*emitter_coords, *detector_coords)
+            samples.append({ 'emitter': emitter_coords,
+                             'detector': detector_coords,
+                             'line': np.array([self.to_plot_coords(coords) for coords in line]),
+                             'value': None })
+        return samples
 
     def lines(self):
         lines = []
@@ -95,32 +109,26 @@ class Scanner:
         # dla każdego położenia tomografu
         for position in self.positions:
             row = []
-
             # dla każdego detektora w obecnym położeniu tomografu
-            for detector in position['detectors']:
-
+            for sample in position['samples']:
                 # zbierz koordynaty punktów należących do linii między emiterem a detektorem
                 # weź ich wartości i dodaj do listy ich średnią
-                values = [self.image[coordsx[0], coordsx[1]] for coordsx in detector['line']]
-                detector['value'] = np.mean(values)
-                row.append(detector['value'])
-
+                values = [self.image[coordsx[0], coordsx[1]] for coordsx in sample['line']]
+                sample['value'] = np.mean(values)
+                row.append(sample['value'])
             res.append(row)
-
         return np.array(res)
 
-    
-    def inverse_radon_transform(self, sinogram):
+    def inverse_radon_transform(self):
         # przygotuj sobie tablicę samych zer
         res = [[0 for _ in i] for i in self.image]
         
         # wszystko tak samo, tylko dodaj ładnie na każdej linii średnią zamiast zapisywać ją do tablicy 
-
         # dla każdego położenia tomografu
         for position in self.positions:
             # dla każdego detektora w obecnym położeniu tomografu
-            for detector in position['detectors']:
+            for sample in position['samples']:
                 # zbierz koordynaty punktów należących do linii między emiterem a detektorem
-                for coordsx in detector['line']:
-                    res[coordsx[0]][coordsx[1]] += detector['value']
+                for coordsx in sample['line']:
+                    res[coordsx[0]][coordsx[1]] += sample['value']
         return res
