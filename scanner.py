@@ -13,7 +13,7 @@ def normalize(num, bot, top):
 
 
 def normalize_photo(photo):
-    bot, top = np.percentile(photo, (40, 98))
+    bot, top = np.percentile(photo, (44, 98))
     print(bot, top)
     res = [[normalize(num, bot, top) for num in x] for x in photo]
     return res
@@ -53,8 +53,8 @@ class Scanner:
         emitter_coords = self.get_detector_coords(rotation+math.pi)
         for i in range(len(detector_coords)):
             line = self.geometry.get_line(*detector_coords[i], *emitter_coords[i])
-            samples.append({ 'emitter': emitter_coords[0],
-                             'detector': detector_coords[1],
+            samples.append({ 'emitter': emitter_coords[i],
+                             'detector': detector_coords[i],
                              'line': np.array([self.to_plot_coords(coords) for coords in line]),
                              'value': 0.0 })
         return samples
