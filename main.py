@@ -23,8 +23,8 @@ if __name__ == '__main__':
     img = color.rgb2gray(img)
 
     scan = Scanner(img, Bresenham).to_square_img()
-    scan.set_sampling_params(step=0.006, detectors_number=300, angle=math.pi)
-    sinogram = scan.generate_sinogram()
+    scan.set_sampling_params(step=0.01, detectors_number=200, angle=math.pi)
+    sinogram = scan.generate_sinogram(steps=100)
     plt.imshow(sinogram)
     plt.show()
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     plt.imshow(sinogram)
     plt.show()
 
-    output = scan.inverse_radon_transform()
+    output = scan.inverse_radon_transform(steps=100)
     output = normalize_photo(output)
     plt.imshow(output)
     plt.title('MSE: ' + str(mean_squared_error(output, scan.image)))

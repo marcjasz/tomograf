@@ -56,7 +56,7 @@ class Scanner:
             samples.append({ 'emitter': emitter_coords[0],
                              'detector': detector_coords[1],
                              'line': np.array([self.to_plot_coords(coords) for coords in line]),
-                             'value': None })
+                             'value': 0.0 })
         return samples
 
 
@@ -68,7 +68,7 @@ class Scanner:
             samples.append({ 'emitter': emitter_coords,
                              'detector': detector_coords,
                              'line': np.array([self.to_plot_coords(coords) for coords in line]),
-                             'value': None })
+                             'value': 0.0 })
         return samples
 
     def lines(self):
@@ -103,11 +103,14 @@ class Scanner:
         return (int(-coords[1]+self.r-1), int(coords[0]+self.r-1))
 
     @functools.lru_cache()
-    def generate_sinogram(self):
+    def generate_sinogram(self, steps=None):
         res = []
 
         # dla każdego położenia tomografu
-        for position in self.positions:
+        for i, position in enumerate(self.positions):
+            if steps and i > steps:
+                break
+
             row = []
             # dla każdego detektora w obecnym położeniu tomografu
             for sample in position['samples']:
@@ -126,13 +129,15 @@ class Scanner:
             for i, sample in enumerate(position['samples']):
                 sample['value'] = values[i]
 
-    def inverse_radon_transform(self):
+    def inverse_radon_transform(self, steps=None):
         # przygotuj sobie tablicę samych zer
         res = [[0 for _ in i] for i in self.image]
         
         # wszystko tak samo, tylko dodaj ładnie na każdej linii średnią zamiast zapisywać ją do tablicy 
         # dla każdego położenia tomografu
-        for position in self.positions:
+        for i, position in enumerate(self.positions):
+            if steps and i > steps:
+                break
             # dla każdego detektora w obecnym położeniu tomografu
             for sample in position['samples']:
                 # zbierz koordynaty punktów należących do linii między emiterem a detektorem
